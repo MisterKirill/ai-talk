@@ -1,0 +1,5 @@
+flask
+transformers
+torch
+pytchat
+flask_sock
