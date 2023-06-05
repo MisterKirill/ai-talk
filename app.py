@@ -1,9 +1,6 @@
 from flask import Flask, render_template, request
 from flask_sock import Sock
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import pytchat
-
-STREAM_ID = "bhqIOEgYDSk"
 
 tokenizer = AutoTokenizer.from_pretrained('tinkoff-ai/ruDialoGPT-medium')
 model = AutoModelForCausalLM.from_pretrained('tinkoff-ai/ruDialoGPT-medium')
@@ -49,24 +46,3 @@ def generate_reply():
         reply = reply.split('@@ВТОРОЙ@@')[0]
     
     return reply
-
-chat = pytchat.create(STREAM_ID)
-topic = ''
-author = ''
-
-while chat.is_alive():
-    for c in chat.get().sync_items():
-        author = c.author.name
-        message = c.message
-        
-        if message.startswith('!topic '):
-            topic = message.replace('!topic ', '')
-            if topic:
-                author = author.replace('|', '')
-                topic = topic.replace('|', '')
-                
-                print(f'Topic by {author}: {topic}')
-
-@app.route("/api/topic", methods = ["GET"])
-def get_topic():
-    return topic

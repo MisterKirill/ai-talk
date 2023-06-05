@@ -3,7 +3,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 let prompt = '@@ПЕРВЫЙ@@винда или линукс или макос?@@ВТОРОЙ@@'
-let customTopic
 
 const clock = new THREE.Clock()
 
@@ -159,29 +158,12 @@ async function fetchReplyAndSpeak(speaker) {
     return data
 }
 
-setInterval(async () => {
-    const data = await fetch('http://127.0.0.1:5000/api/topic')
-    const topic = await data.text()
-
-    customTopic = topic
-
-    console.log(`Topic has been changed to ${topic}`)
-}, 30000)
-
 while(true) {
-    if(customTopic) {
-        prompt = `@@ПЕРВЫЙ@@${customTopic}@@ВТОРОЙ@@`
-    }
-
     prompt = await fetchReplyAndSpeak('Irina')
     subtitle.innerText = prompt
     subtitle.style.color = '#ff00d2'
 
     prompt = `@@ПЕРВЫЙ@@${prompt}@@ВТОРОЙ@@`
-
-    if(customTopic) {
-        prompt = `@@ПЕРВЫЙ@@${customTopic}@@ВТОРОЙ@@`
-    }
 
     prompt = await fetchReplyAndSpeak('Pavel')
     subtitle.innerText = prompt
