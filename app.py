@@ -19,10 +19,6 @@ def generate_reply():
     if not prompt:
         return "fatal error 000000000000000000000x1"
     
-    speaker = request.args.get("speaker")
-    if not speaker:
-        return "fatal error 000000000000000000000x4"
-    
     inputs = tokenizer(prompt, return_tensors='pt')
     generated_token_ids = model.generate(
         **inputs,

@@ -117,10 +117,8 @@ window.speechSynthesis.onvoiceschanged = () => {
     pavelVoice = voices[4]
 }
 
-async function fetchReplyAndSpeak(speaker) {
-    let result
-    result = await fetch('/api/generate?&p=' + prompt + '&speaker=' + speaker)
-    
+async function fetchReplyAndSpeak(prompt, speaker) {
+    const result = await fetch('/api/generate?&p=' + prompt)
     const data = await result.text()
     console.log('Reply: ' + data)
     
@@ -159,13 +157,13 @@ async function fetchReplyAndSpeak(speaker) {
 }
 
 while(true) {
-    prompt = await fetchReplyAndSpeak('Irina')
+    prompt = await fetchReplyAndSpeak(prompt, 'Irina')
     subtitle.innerText = prompt
     subtitle.style.color = '#ff00d2'
 
     prompt = `@@ПЕРВЫЙ@@${prompt}@@ВТОРОЙ@@`
 
-    prompt = await fetchReplyAndSpeak('Pavel')
+    prompt = await fetchReplyAndSpeak(prompt, 'Pavel')
     subtitle.innerText = prompt
     subtitle.style.color = 'blue'
 
