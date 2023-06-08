@@ -1,2 +1,6 @@
 .venv/
 __pycache__/
+
+# TTS
+tts_model.pt
+test.wav

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-let prompt = '@@ПЕРВЫЙ@@винда или линукс или макос?@@ВТОРОЙ@@'
+let prompt = '@@ПЕРВЫЙ@@Привет. Как дела?@@ВТОРОЙ@@'
 
 const clock = new THREE.Clock()
 
@@ -20,10 +20,6 @@ const light1 = new THREE.PointLight(0xffffff, 2)
 light1.position.set(2.5, 2.5, 2.5)
 scene.add(light1)
 
-const light2 = new THREE.PointLight(0xffffff, 2)
-light2.position.set(-2.5, 2.5, 2.5)
-scene.add(light2)
-
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(window.devicePixelRatio)
@@ -34,8 +30,8 @@ document.body.appendChild(renderer.domElement)
 
 const subtitle = document.getElementById('subtitle')
 
-let irinaTalking = false
-let pavelTalking = false
+let womanTalking = false
+let manTalking = false
 
 const loader = new GLTFLoader()
 
@@ -46,36 +42,36 @@ loader.load('static/models/scene.glb', (gltf) => {
     animate()
 })
 
-let pavelMixer
-let pavelAnimation
-let pavelModel
-loader.load('static/models/pavel.glb', (gltf) => {
-    pavelModel = gltf.scene
+let manMixer
+let manAnimation
+let manModel
+loader.load('static/models/man.glb', (gltf) => {
+    manModel = gltf.scene
 
-    pavelModel.position.z = 10
-    pavelModel.rotation.y = 60 * Math.PI / 180
+    manModel.position.z = 10
+    manModel.rotation.y = 60 * Math.PI / 180
 
-    pavelAnimation = gltf.animations[0]
-    pavelMixer = new THREE.AnimationMixer(pavelModel)
+    manAnimation = gltf.animations[0]
+    manMixer = new THREE.AnimationMixer(manModel)
 
-    scene.add(pavelModel)
+    scene.add(manModel)
     animate()
 })
 
-let irinaMixer
-let irinaAnimation
-let irinaModel
-loader.load('static/models/irina.glb', (gltf) => {
-    irinaModel = gltf.scene
+let womanMixer
+let womanAnimation
+let womanModel
+loader.load('static/models/woman.glb', (gltf) => {
+    womanModel = gltf.scene
 
-    irinaModel.position.z = -10
-    irinaModel.position.y = 1.5
-    irinaModel.rotation.y = -40 * Math.PI / 180
+    womanModel.position.z = -10
+    womanModel.position.y = 1.5
+    womanModel.rotation.y = -40 * Math.PI / 180
     
-    irinaAnimation = gltf.animations[0]
-    irinaMixer = new THREE.AnimationMixer(irinaModel)
+    womanAnimation = gltf.animations[0]
+    womanMixer = new THREE.AnimationMixer(womanModel)
     
-    scene.add(irinaModel)
+    scene.add(womanModel)
     animate()
 })
 
@@ -84,86 +80,61 @@ function animate() {
 
     const delta = clock.getDelta()
 
-    if(pavelMixer) {
-        if(pavelTalking) {
-            pavelMixer.clipAction(pavelAnimation).play()
+    if(manMixer) {
+        if(manTalking) {
+            manMixer.clipAction(manAnimation).play()
         } else {
-            pavelMixer.clipAction(pavelAnimation).stop()
+            manMixer.clipAction(manAnimation).stop()
         }
 
-        pavelMixer.update(delta)
+        manMixer.update(delta)
     }
 
-    if(irinaMixer) {
-        if(irinaTalking) {
-            irinaMixer.clipAction(irinaAnimation).play()
+    if(womanMixer) {
+        if(womanTalking) {
+            womanMixer.clipAction(womanAnimation).play()
         } else {
-            irinaMixer.clipAction(irinaAnimation).stop()
+            womanMixer.clipAction(womanAnimation).stop()
         }
 
-        irinaMixer.update(delta)
+        womanMixer.update(delta)
     }
 
     renderer.render(scene, camera)
 }
 
-let irinaVoice
-let pavelVoice
-window.speechSynthesis.onvoiceschanged = () => {
-    const voices = speechSynthesis.getVoices()
-    console.log(voices)
-
-    irinaVoice = voices[3]
-    pavelVoice = voices[4]
-}
-
 async function fetchReplyAndSpeak(prompt, speaker) {
-    const result = await fetch('/api/generate?&p=' + prompt)
-    const data = await result.text()
-    console.log('Reply: ' + data)
+    const result = await fetch('/api/generate?p=' + prompt + '&speaker=' + speaker)
+    const data = await result.json()
+    console.log('Reply: ' + data.reply)
     
-    const speech = new SpeechSynthesisUtterance()
-    
-    speech.lang = 'ru'
-    speech.text = data
+    if(speaker == 'woman') {
+        if(womanModel) camera.lookAt(womanModel.position)
 
-    if(speaker == 'Irina') {
-        if(irinaModel) camera.lookAt(irinaModel.position)
-        speech.voice = irinaVoice
-    } else if(speaker == 'Pavel') {
-        if(pavelModel) camera.lookAt(pavelModel.position)
-        speech.voice = pavelVoice
+        womanTalking = true
+        setTimeout(() => {
+            womanTalking = false
+        }, data.duration * 1000)
+    } else if(speaker == 'man') {
+        if(manModel) camera.lookAt(manModel.position)
+
+        manTalking = true
+        setTimeout(() => {
+            manTalking = false
+        }, data.duration * 1000)
     }
 
-    window.speechSynthesis.speak(speech)
-
-    if(speaker == 'Irina') {
-        speech.onstart = () => {
-            irinaTalking = true
-        }
-        speech.onend = () => {
-            irinaTalking = false
-        }
-    } else if(speaker == 'Pavel') {
-        speech.onstart = () => {
-            pavelTalking = true
-        }
-        speech.onend = () => {
-            pavelTalking = false
-        }
-    }
-
-    return data
+    return data.reply
 }
 
 while(true) {
-    prompt = await fetchReplyAndSpeak(prompt, 'Irina')
+    prompt = await fetchReplyAndSpeak(prompt, 'woman')
     subtitle.innerText = prompt
     subtitle.style.color = '#ff00d2'
 
     prompt = `@@ПЕРВЫЙ@@${prompt}@@ВТОРОЙ@@`
 
-    prompt = await fetchReplyAndSpeak(prompt, 'Pavel')
+    prompt = await fetchReplyAndSpeak(prompt, 'man')
     subtitle.innerText = prompt
     subtitle.style.color = 'blue'
 
