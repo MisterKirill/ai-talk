@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request
-from flask_sock import Sock
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from threading import Thread
+from num2words import num2words
 import wave
 import pyaudio
 import os
 import torch
+import re
 
 print('Initializing ruDialoGPT...')
 
@@ -24,11 +25,9 @@ if not os.path.isfile(local_file):
 tts_model = torch.package.PackageImporter(local_file).load_pickle("tts_models", "model")
 tts_model.to(device)
 
-example_text = 'В недрах тундры выдры в г+етрах т+ырят в вёдра ядра к+едров.'
 sample_rate = 48000
 
 app = Flask(__name__, static_folder = "static")
-sock = Sock(app)
 
 @app.route("/")
 def index():
@@ -67,6 +66,12 @@ def generate_reply():
     
     context_with_response = [tokenizer.decode(sample_token_ids) for sample_token_ids in generated_token_ids]
     reply = context_with_response[0].replace(prompt, "").split("@@ПЕРВЫЙ@@")[0]
+    
+    # Extract numbers and convert them to words
+    numbers = re.findall(r'\d+', reply)
+    for number in numbers:
+        wordsnum = num2words(int(number), lang='ru')
+        reply = reply.replace(number, wordsnum)
     
     audio_paths = tts_model.save_wav(text=reply, speaker=speaker, sample_rate=sample_rate)
     wf = wave.open(audio_paths)

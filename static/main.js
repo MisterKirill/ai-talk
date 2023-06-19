@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-let prompt = '@@ПЕРВЫЙ@@Привет. Как дела?@@ВТОРОЙ@@'
+let prompt = '@@ПЕРВЫЙ@@ты тупой@@ВТОРОЙ@@'
 
 const clock = new THREE.Clock()
 
@@ -105,6 +105,7 @@ function animate() {
 
 async function fetchReplyAndSpeak(prompt, speaker) {
     const result = await fetch('/api/generate?p=' + prompt + '&speaker=' + speaker)
+
     const data = await result.json()
     console.log('Reply: ' + data.reply)
     
