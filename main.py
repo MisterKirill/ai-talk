@@ -2,9 +2,9 @@ import os
 import torch
 import librosa
 import winsound
-from flask import Flask, request
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from threading import Thread
+
+FIRST_TEXT = 'привет, дурачок'
 
 device = torch.device('cpu')
 torch.set_num_threads(4)
@@ -22,8 +22,6 @@ tts_model.to(device)
 tokenizer = AutoTokenizer.from_pretrained('tinkoff-ai/ruDialoGPT-medium')
 model = AutoModelForCausalLM.from_pretrained('tinkoff-ai/ruDialoGPT-medium')
 
-app = Flask(__name__)
-
 def speak(text: str, speaker: str) -> float:
     audio_paths = tts_model.save_wav(
         text=text,
@@ -31,12 +29,10 @@ def speak(text: str, speaker: str) -> float:
         sample_rate=48000
     )
     
-    Thread(target=play_speech, args=(audio_paths,), daemon=True).start()
+    winsound.PlaySound(audio_paths, winsound.SND_ALIAS)
     
     return librosa.get_duration(path=audio_paths)
 
-def play_speech(audio_paths: str):
-    winsound.PlaySound(audio_paths, winsound.SND_ASYNC | winsound.SND_ALIAS)
 
 def generate_reply(text: str) -> str:
     prompt = f'@@ПЕРВЫЙ@@{text}@@ВТОРОЙ@@'
@@ -58,22 +54,31 @@ def generate_reply(text: str) -> str:
     )
     context_with_response = [tokenizer.decode(sample_token_ids) for sample_token_ids in generated_token_ids]
     
-    print(context_with_response)
-    
     return context_with_response[0].replace(prompt, '').split('@@ПЕРВЫЙ@@')[0]
 
-@app.route('/generate', methods=['GET'])
-def generate():
-    speaker = request.args.get('speaker')
-    text = request.args.get('text')
-    
-    if not speaker or not text:
-        return 'Bad Request', 400
-    
+
+def generate_and_speak(speaker: str, text: str) -> str:
     reply = generate_reply(text)
-    duration = speak(reply, speaker)
     
-    return {
-        'reply': reply,
-        'duration': duration
-    }
+    print(f'{speaker}: {reply}')
+    
+    speak(reply, speaker)
+    return reply
+
+
+def main():
+    speaker = 'baya'
+    
+    reply = generate_and_speak(speaker, FIRST_TEXT)
+    
+    while True:
+        if speaker == 'baya':
+            speaker = 'eugene'
+        else:
+            speaker = 'baya'
+        
+        reply = generate_and_speak(speaker, reply)
+
+
+if __name__ == '__main__':
+    main()
