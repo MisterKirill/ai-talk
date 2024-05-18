@@ -3,8 +3,12 @@ import torch
 import librosa
 import winsound
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from obswebsocket import obsws, requests
 
 FIRST_TEXT = 'привет, дурачок'
+
+ws = obsws('localhost', 4455)
+ws.connect()
 
 device = torch.device('cpu')
 torch.set_num_threads(4)
@@ -22,6 +26,14 @@ tts_model.to(device)
 tokenizer = AutoTokenizer.from_pretrained('tinkoff-ai/ruDialoGPT-medium')
 model = AutoModelForCausalLM.from_pretrained('tinkoff-ai/ruDialoGPT-medium')
 
+def set_subtitle(subtitle: str):
+    ws.call(requests.SetInputSettings(
+        inputName='Subtitle',
+        inputSettings={
+            'text': subtitle
+        }
+    ))
+
 def speak(text: str, speaker: str) -> float:
     audio_paths = tts_model.save_wav(
         text=text,
@@ -29,7 +41,11 @@ def speak(text: str, speaker: str) -> float:
         sample_rate=48000
     )
     
+    set_subtitle(text)
+    
     winsound.PlaySound(audio_paths, winsound.SND_ALIAS)
+    
+    set_subtitle('')
     
     return librosa.get_duration(path=audio_paths)
 
