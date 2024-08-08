@@ -10,8 +10,7 @@ FIRST_TEXT = 'привет, дурачок'
 ws = obsws('localhost', 4455)
 ws.connect()
 
-device = torch.device('cpu')
-torch.set_num_threads(4)
+device = torch.device('cuda')
 local_file = 'model.pt'
 
 if not os.path.isfile(local_file):
